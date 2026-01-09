@@ -1,5 +1,5 @@
 import Reputation from "../../models/Reputation.model.js";
-import { calculateReputation } from "./reputation.service.js";
+import { calculateReputation } from "../reputation.service.js";
 import { uploadToIPFS } from "../ipfs.service.js";
 import { keccakHash } from "../../utils/hash.js";
 import { mintCredentialNFT } from "../blockchain/credentialNFT.service.js";
