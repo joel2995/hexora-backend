@@ -1,12 +1,12 @@
 import express from "express";
 import cors from "cors";
 
-import authRoutes from "./routes/auth.route.js";
-import userRoutes from "./routes/user.route.js";
-import creatorRoutes from "./routes/creator.route.js";
-import fanRoutes from "./routes/fan.route.js";
-import reputationRoutes from "./routes/reputation.route.js";
-import healthRoutes from "./routes/health.route.js";
+import authRoutes from "./src/routes/auth.route.js";
+import userRoutes from "./src/routes/user.route.js";
+import creatorRoutes from "./src/routes/creator.route.js";
+import fanRoutes from "./src/routes/fan.route.js";
+import reputationRoutes from "./src/routes/reputation.route.js";
+import healthRoutes from "./src/routes/health.route.js";
 
 const app = express();
 

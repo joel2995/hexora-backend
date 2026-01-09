@@ -2,9 +2,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import app from "./app.js";
-import { connectDB } from "./config/db.js";
-import { startEventListeners } from "./services/eventListener.service.js";
-import { startCronJobs } from "./services/cron.service.js";
+import { connectDB } from "./src/config/db.js";
+import { startEventListeners } from "./src/services/eventListener.service.js";
+import { startCronJobs } from "./src/services/cron.service.js";
 
 const PORT = process.env.PORT || 5000;
 
