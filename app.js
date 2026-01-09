@@ -7,6 +7,7 @@ import creatorRoutes from "./src/routes/creator.route.js";
 import fanRoutes from "./src/routes/fan.route.js";
 import reputationRoutes from "./src/routes/reputation.route.js";
 import healthRoutes from "./src/routes/health.route.js";
+import balanceRoutes from "./src/routes/balance.route.js";
 
 const app = express();
 
@@ -36,7 +37,7 @@ app.use("/creator", creatorRoutes);
 app.use("/fan", fanRoutes);
 app.use("/reputation", reputationRoutes);
 app.use("/health", healthRoutes);
-
+app.use("/balance", balanceRoutes);
 // -------------------------
 // Global error fallback
 // -------------------------
