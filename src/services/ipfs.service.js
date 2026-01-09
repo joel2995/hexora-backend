@@ -1,14 +1,12 @@
 import axios from "axios";
 
-/**
- * Upload JSON metadata to IPFS using Pinata
- */
 export async function uploadToIPFS(data) {
   try {
     const response = await axios.post(
       "https://api.pinata.cloud/pinning/pinJSONToIPFS",
       data,
       {
+        timeout: 15000,
         headers: {
           "Content-Type": "application/json",
           pinata_api_key: process.env.PINATA_API_KEY,
@@ -18,8 +16,7 @@ export async function uploadToIPFS(data) {
     );
 
     return `ipfs://${response.data.IpfsHash}`;
-  } catch (error) {
-    console.error("[IPFS ERROR]", error.response?.data || error.message);
+  } catch (err) {
     throw new Error("IPFS upload failed");
   }
 }
