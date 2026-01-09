@@ -1,102 +1,28 @@
 import express from "express";
-import Reputation from "../models/Reputation.model.js";
-import {
-  calculateReputation,
-  canUpdateInfluence,
-  canUpdateTrust
-} from "../services/reputation.service.js";
-import { uploadToIPFS } from "../services/ipfs.service.js";
-import { keccakHash } from "../utils/hash.js";
-import { mintOrUpdateCredentialNFT } from "../services/blockchain.service.js";
+import { processReputation } from "../services/reputation/reputation.flow.js";
 
 const router = express.Router();
 
+/**
+ * Main reputation update endpoint
+ * All logic lives in reputation.flow
+ */
 router.post("/update", async (req, res) => {
   try {
     const { wallet, metrics } = req.body;
 
-    let reputation = await Reputation.findOne({ wallet });
-    if (!reputation) reputation = new Reputation({ wallet });
-
-    // ✅ ONLY SCORES COME FROM THIS
-    const { influenceScore, trustScore } =
-      calculateReputation(metrics);
-
-    const now = new Date();
-
-    // -------------------------
-    // Cooldown enforcement
-    // -------------------------
-    if (
-      !canUpdateInfluence(reputation.lastInfluenceUpdate) &&
-      !canUpdateTrust(reputation.lastTrustUpdate)
-    ) {
-      return res.status(429).json({
-        error: "Score update cooldown active"
-      });
+    if (!wallet || !metrics) {
+      return res.status(400).json({ error: "Invalid payload" });
     }
 
-    // -------------------------
-    // Versioned IPFS metadata
-    // -------------------------
-    const ipfsData = {
-      version: "v1",
-      wallet,
-      scores: {
-        influence: influenceScore,
-        trust: trustScore
-      },
-      breakdown: metrics,
-      timestamp: now.toISOString()
-    };
-
-    const ipfsCID = await uploadToIPFS(ipfsData);
-    const hash = keccakHash(ipfsCID);
-
-    // -------------------------
-    // Update reputation record
-    // -------------------------
-    reputation.influenceScore = influenceScore;
-    reputation.trustScore = trustScore;
-    reputation.ipfsCID = ipfsCID;
-    reputation.hash = hash;
-
-    if (canUpdateInfluence(reputation.lastInfluenceUpdate)) {
-      reputation.lastInfluenceUpdate = now;
-    }
-
-    if (canUpdateTrust(reputation.lastTrustUpdate)) {
-      reputation.lastTrustUpdate = now;
-    }
-
-    reputation.history.push({
-      influenceScore,
-      trustScore,
-      timestamp: now
-    });
-
-    await reputation.save();
-
-    // -------------------------
-    // Credential NFT orchestration
-    // -------------------------
-    await mintOrUpdateCredentialNFT(
-      wallet,
-      influenceScore,
-      trustScore,
+    const result = await processReputation(
+      wallet.toLowerCase(),
       metrics
     );
 
-    res.json({
-      wallet,
-      influenceScore,
-      trustScore,
-      ipfsCID,
-      hash
-    });
-
+    res.json(result);
   } catch (err) {
-    console.error("[REPUTATION UPDATE ERROR]", err);
+    console.error("[REPUTATION FLOW ERROR]", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
