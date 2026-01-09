@@ -43,7 +43,7 @@ const ReputationSchema = new mongoose.Schema(
     lastInfluenceUpdate: Date,
     lastTrustUpdate: Date,
 
-    // Versioning / epoch (VERY useful later)
+    // Versioning / epoch
     epoch: {
       type: Number,
       default: 0,
@@ -58,12 +58,11 @@ const ReputationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Optional: cap history length
-ReputationSchema.pre("save", function (next) {
+// ✅ SAFE async pre-save hook (NO next)
+ReputationSchema.pre("save", async function () {
   if (this.history.length > 50) {
     this.history = this.history.slice(-50);
   }
-  next();
 });
 
 export default mongoose.model("Reputation", ReputationSchema);
