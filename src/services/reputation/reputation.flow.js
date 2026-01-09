@@ -1,51 +1,70 @@
 import Reputation from "../../models/Reputation.model.js";
-import { calculateReputation } from "./reputation.logic.js";
-import { encryptValue, submitEncryptedSignals } from "../blockchain/inco.service.js";
-import { mintCredentialNFT } from "../blockchain/shardeum.service.js";
+import { calculateReputation } from "./reputation.service.js";
 import { uploadToIPFS } from "../ipfs.service.js";
 import { keccakHash } from "../../utils/hash.js";
+import { mintCredentialNFT } from "../blockchain/credentialNFT.service.js";
 
 export async function processReputation(wallet, metrics) {
-  const { influenceScore, trustScore } = calculateReputation(metrics);
+  let reputation = await Reputation.findOne({ wallet });
+  if (!reputation) reputation = new Reputation({ wallet });
 
-  const encryptedInfluence = await encryptValue(influenceScore);
-  const encryptedTrust = await encryptValue(trustScore);
+  // -------------------------
+  // 1️⃣ Calculate scores
+  // -------------------------
+  const { influenceScore, trustScore } =
+    calculateReputation(metrics);
 
-  await submitEncryptedSignals(
+  const now = new Date();
+
+  // -------------------------
+  // 2️⃣ IPFS metadata
+  // -------------------------
+  const ipfsData = {
     wallet,
-    encryptedInfluence,
-    encryptedTrust
-  );
+    scores: {
+      influence: influenceScore,
+      trust: trustScore,
+    },
+    metrics,
+    timestamp: now.toISOString(),
+  };
 
-  const metadata = {
+  const ipfsCID = await uploadToIPFS(ipfsData);
+  const hash = keccakHash(ipfsCID);
+
+  // -------------------------
+  // 3️⃣ Update DB
+  // -------------------------
+  reputation.influenceScore = influenceScore;
+  reputation.trustScore = trustScore;
+  reputation.ipfsCID = ipfsCID;
+  reputation.hash = hash;
+
+  reputation.history.push({
+    influenceScore,
+    trustScore,
+    timestamp: now,
+  });
+
+  await reputation.save();
+
+  // -------------------------
+  // 4️⃣ Mint Credential NFT (ON-CHAIN)
+  // -------------------------
+  await mintCredentialNFT({
     wallet,
     influenceScore,
     trustScore,
-    updatedAt: new Date()
+  });
+
+  // -------------------------
+  // 5️⃣ Return response
+  // -------------------------
+  return {
+    wallet,
+    influenceScore,
+    trustScore,
+    ipfsCID,
+    hash,
   };
-
-  const ipfsCID = await uploadToIPFS(metadata);
-  const hash = keccakHash(ipfsCID);
-
-  await mintCredentialNFT(wallet, influenceScore, trustScore);
-
-  await Reputation.findOneAndUpdate(
-    { wallet },
-    {
-      influenceScore,
-      trustScore,
-      ipfsCID,
-      hash,
-      $push: {
-        history: {
-          influenceScore,
-          trustScore,
-          timestamp: new Date()
-        }
-      }
-    },
-    { upsert: true }
-  );
-
-  return { influenceScore, trustScore };
 }
