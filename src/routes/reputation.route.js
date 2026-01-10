@@ -8,6 +8,7 @@ const router = express.Router();
  * All logic lives in reputation.flow
  */
 router.post("/update", async (req, res) => {
+  console.log("✅ /reputation/update HIT", req.body)
   try {
     const { wallet, metrics } = req.body;
 
