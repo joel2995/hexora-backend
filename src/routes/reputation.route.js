@@ -1,31 +1,25 @@
 import express from "express";
-import { processReputation } from "../services/reputation/reputation.flow.js";
+import Reputation from "../models/Reputation.model.js";
 
 const router = express.Router();
 
-/**
- * Main reputation update endpoint
- * All logic lives in reputation.flow
- */
 router.post("/update", async (req, res) => {
-  console.log("✅ /reputation/update HIT", req.body)
-  try {
-    const { wallet, metrics } = req.body;
+  console.log("RAW BODY =", req.body);
+  console.log("wallet =", req.body.wallet);
+  console.log("encryptedSignals =", req.body.encryptedSignals);
 
-    if (!wallet || !metrics) {
-      return res.status(400).json({ error: "Invalid payload" });
-    }
+  const { wallet, encryptedSignals } = req.body;
 
-    const result = await processReputation(
-      wallet.toLowerCase(),
-      metrics
-    );
+if (!wallet || !encryptedSignals) {
+  return res.status(400).json({
+    error: "Invalid payload",
+    expected: ["wallet", "encryptedSignals"],
+    received: req.body,
+  });
+}
 
-    res.json(result);
-  } catch (err) {
-    console.error("[REPUTATION FLOW ERROR]", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
+  res.json({ ok: true });
 });
+
 
 export default router;
