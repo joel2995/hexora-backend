@@ -2,18 +2,11 @@ import mongoose from "mongoose";
 
 const AllowanceVoucherSchema = new mongoose.Schema(
   {
-    owner: { type: String, required: true, lowercase: true },
-    delegate: { type: String, required: true, lowercase: true },
-
-    scope: {
-      type: [String], // ["trustCheck", "influenceCheck"]
-      required: true,
-    },
-
-    expiry: { type: Number, required: true },
-
+    owner: { type: String, required: true, index: true },      // creator
+    delegate: { type: String, required: true, index: true },   // brand
+    scope: { type: [String], required: true },                 // permissions
+    expiresAt: { type: Number, required: true },
     signature: { type: String, required: true },
-
     revoked: { type: Boolean, default: false },
   },
   { timestamps: true }
