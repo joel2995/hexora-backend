@@ -4,45 +4,29 @@ import AllowanceVoucher from "../models/AllowanceVoucher.model.js";
 const router = express.Router();
 
 /**
- * Store a new voucher
+ * Creator submits signed allowance voucher
  */
 router.post("/issue", async (req, res) => {
-  const { owner, delegate, scope, expiry, signature } = req.body;
+  try {
+    const { owner, delegate, scope, expiresAt, signature } = req.body;
 
-  if (!owner || !delegate || !scope || !expiry || !signature) {
-    return res.status(400).json({ error: "Invalid voucher payload" });
+    if (!owner || !delegate || !scope || !expiresAt || !signature) {
+      return res.status(400).json({ error: "Invalid voucher payload" });
+    }
+
+    const voucher = await AllowanceVoucher.create({
+      owner: owner.toLowerCase(),
+      delegate: delegate.toLowerCase(),
+      scope,
+      expiresAt,
+      signature,
+    });
+
+    res.json({ ok: true, voucherId: voucher._id });
+  } catch (err) {
+    console.error("[ALLOWANCE ISSUE ERROR]", err);
+    res.status(500).json({ error: "Internal server error" });
   }
-
-  const voucher = await AllowanceVoucher.create({
-    owner,
-    delegate,
-    scope,
-    expiry,
-    signature,
-  });
-
-  res.json({ ok: true, voucher });
-});
-
-/**
- * Verify voucher validity
- */
-router.post("/verify", async (req, res) => {
-  const { owner, delegate, scope } = req.body;
-
-  const voucher = await AllowanceVoucher.findOne({
-    owner,
-    delegate,
-    scope,
-    revoked: false,
-    expiry: { $gt: Date.now() },
-  });
-
-  if (!voucher) {
-    return res.status(403).json({ valid: false });
-  }
-
-  res.json({ valid: true, voucher });
 });
 
 export default router;
