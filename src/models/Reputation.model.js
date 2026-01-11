@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
 
 /**
- * Historical reputation snapshots
- * (used only when plaintext scores are computed)
+ * Historical plaintext reputation snapshots
  */
 const ReputationHistorySchema = new mongoose.Schema(
   {
@@ -18,9 +17,9 @@ const ReputationHistorySchema = new mongoose.Schema(
 
 /**
  * Main Reputation schema
- * Supports BOTH:
- * 1) Legacy plaintext reputation
- * 2) INCO encrypted reputation inputs
+ * Supports:
+ * - Encrypted INCO inputs
+ * - Optional attested reveals (E)
  */
 const ReputationSchema = new mongoose.Schema(
   {
@@ -36,23 +35,24 @@ const ReputationSchema = new mongoose.Schema(
     },
 
     // -------------------------
-    // 🔐 INCO ENCRYPTED INPUTS (B)
-    // Backend NEVER decrypts these
+    // 🔐 INCO ENCRYPTED INPUTS (A+B)
     // -------------------------
     encryptedSignals: {
-      engagement: {
-        type: String,
-      },
-      stakingVelocity: {
-        type: String,
-      },
-      // future-safe: allow more encrypted inputs
-      // volatility: String,
-      // moderationScore: String,
+      engagement: String,
+      stakingVelocity: String,
     },
 
     // -------------------------
-    // Plaintext Scores (Legacy / Hybrid)
+    // 🔓 INCO ATTESTED DECRYPT / REVEAL (E)
+    // Stored ONLY after user consent
+    // -------------------------
+    revealed: {
+      type: Object,
+      default: {},
+    },
+
+    // -------------------------
+    // Plaintext Scores (legacy / hybrid)
     // -------------------------
     influenceScore: {
       type: Number,
@@ -67,19 +67,13 @@ const ReputationSchema = new mongoose.Schema(
     },
 
     // -------------------------
-    // IPFS anchoring (B + E)
+    // IPFS anchoring
     // -------------------------
     ipfsCID: String,
     hash: String,
 
     // -------------------------
-    // Cooldown tracking
-    // -------------------------
-    lastInfluenceUpdate: Date,
-    lastTrustUpdate: Date,
-
-    // -------------------------
-    // Epoch / Versioning
+    // Epoch / versioning
     // -------------------------
     epoch: {
       type: Number,
@@ -87,7 +81,7 @@ const ReputationSchema = new mongoose.Schema(
     },
 
     // -------------------------
-    // Historical Scores
+    // Historical scores
     // -------------------------
     history: {
       type: [ReputationHistorySchema],
@@ -97,10 +91,8 @@ const ReputationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// -------------------------
-// SAFE async pre-save hook
-// -------------------------
-ReputationSchema.pre("save", async function () {
+// Keep history bounded
+ReputationSchema.pre("save", function () {
   if (this.history.length > 50) {
     this.history = this.history.slice(-50);
   }

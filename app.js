@@ -10,6 +10,7 @@ import healthRoutes from "./src/routes/health.route.js";
 import balanceRoutes from "./src/routes/balance.route.js";
 import attestedRoutes from "./src/routes/attestedCompute.route.js";
 import allowanceRoutes from "./src/routes/allowance.route.js";
+import reputationRevealRoutes from "./src/routes/reputationReveal.route.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use("/health", healthRoutes);
 app.use("/balance", balanceRoutes);
 app.use("/attested", attestedRoutes);
 app.use("/allowance", allowanceRoutes);
+app.use("/reputation", reputationRevealRoutes)
 // -------------------------
 // Global error fallback
 // -------------------------
