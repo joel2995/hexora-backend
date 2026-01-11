@@ -1,33 +1,40 @@
 import express from "express";
 import Reputation from "../models/Reputation.model.js";
-import Creator from "../models/Creator.model.js";
 
 const router = express.Router();
 
 /**
- * GET fan dashboard data
- * 🔐 MUST return encryptedSignals for INCO flows
+ * Fan dashboard status
+ * Aggregates reputation + mock portfolio
  */
-router.get("/status/:wallet", async (req, res) => {
+router.get("/status", async (req, res) => {
   try {
-    const wallet = req.params.wallet.toLowerCase();
+    const wallet = req.query.wallet?.toLowerCase();
 
-    const reputation = await Reputation.findOne({ wallet }).lean();
+    if (!wallet) {
+      return res.status(400).json({ error: "Wallet required" });
+    }
 
-    const creators = await Creator.find({ isActive: true });
+    const reputation = await Reputation.findOne({ wallet });
 
     res.json({
       wallet,
-      encryptedSignals: reputation?.encryptedSignals || null, // 🔥 THIS FIXES EVERYTHING
-      influence: reputation?.influenceScore ?? null,
-      trust: reputation?.trustScore ?? null,
-      portfolio: [], // keep your existing logic if any
-      totalValue: 0,
-      rewards: 0,
+
+      // 🔐 THIS IS THE KEY FIX
+      encryptedSignals: reputation?.encryptedSignals || null,
+
+      // Mock / derived values (OK for hackathon)
+      portfolio: [
+        { creator: "0xabc...123", symbol: "CRTR", amount: 1500, value: 2340 },
+        { creator: "0xdef...456", symbol: "ART", amount: 800, value: 1200 },
+      ],
+      totalValue: 3540,
+      rewards: 125.5,
+      influence: 42,
     });
   } catch (err) {
     console.error("[FAN STATUS ERROR]", err);
-    res.status(500).json({ error: "Failed to load fan status" });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

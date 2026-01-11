@@ -47,9 +47,18 @@ const ReputationSchema = new mongoose.Schema(
     // Stored ONLY after user consent
     // -------------------------
     revealed: {
-      type: Object,
-      default: {},
+  type: Map,
+  of: new mongoose.Schema(
+    {
+      value: mongoose.Schema.Types.Mixed,
+      proof: String,
+      attestedBy: String,
+      timestamp: Number,
     },
+    { _id: false }
+  ),
+  default: {},
+},
 
     // -------------------------
     // Plaintext Scores (legacy / hybrid)

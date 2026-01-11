@@ -5,6 +5,9 @@ const router = express.Router()
 
 router.post("/reveal", async (req, res) => {
   try {
+    console.log("🟡 REVEAL HIT")
+    console.log("BODY =", req.body)
+
     const {
       wallet,
       field,
@@ -14,8 +17,17 @@ router.post("/reveal", async (req, res) => {
       timestamp,
     } = req.body
 
-    if (!wallet || !field || plaintext === undefined || !proof) {
-      return res.status(400).json({ error: "Invalid reveal payload" })
+    if (
+      !wallet ||
+      !field ||
+      plaintext === undefined ||
+      typeof proof !== "string"
+    ) {
+      console.error("❌ INVALID PAYLOAD")
+      return res.status(400).json({
+        error: "Invalid reveal payload",
+        received: req.body,
+      })
     }
 
     await Reputation.findOneAndUpdate(
@@ -45,5 +57,4 @@ router.post("/reveal", async (req, res) => {
     res.status(500).json({ error: "Internal server error" })
   }
 })
-
 export default router
