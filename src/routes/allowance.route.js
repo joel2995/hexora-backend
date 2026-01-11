@@ -7,6 +7,8 @@ const router = express.Router();
  * Creator submits signed allowance voucher
  */
 router.post("/issue", async (req, res) => {
+  console.log("🪪 ALLOWANCE ISSUE HIT");
+  console.log("BODY =", req.body);
   try {
     const { owner, delegate, scope, expiresAt, signature } = req.body;
 
